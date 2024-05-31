@@ -13,6 +13,14 @@ def index():
     return (render_template('index.html'))
 
 
+@app.route('/debuglog', methods=['GET'])
+def log_properties():
+    whatsapp_phone_number = Config.WHATSAPP_PHONE_NUMBER_ID
+    whatsapp_token = Config.WHATSAPP_TOKEN
+    whatsapp_url = Config.WHATSAPP_URL
+    verify_token = Config.VERIFY_TOKEN
+    return f'Whatsapp phone number {whatsapp_phone_number} \n Whatsapp token {whatsapp_token}\n Whatsapp URL {whatsapp_url}\n verify token {verify_token}', 200
+
 
 @app.route('/webhook', methods=['GET'])
 def webhook_verification():
