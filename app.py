@@ -1,3 +1,4 @@
+import requests
 from flask import Flask, render_template, request, Blueprint, json, jsonify
 
 from config import Config
@@ -5,12 +6,15 @@ from config import Config
 app = Flask(__name__)
 app.config.from_object(Config)
 main = Blueprint('main', __name__)
+
+
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return (render_template('index.html'))
 
 
-@main.route('/webhook', methods=['GET'])
+
+@app.route('/webhook', methods=['GET'])
 def webhook_verification():
     verify_token = Config.VERIFY_TOKEN
     mode = request.args.get('hub.mode')
@@ -25,7 +29,7 @@ def webhook_verification():
     return 'Hello world', 200
 
 
-@main.route('/webhook', methods=['POST'])
+@app.route('/webhook', methods=['POST'])
 def webhook():
     data = request.get_json()
 
