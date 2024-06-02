@@ -34,7 +34,7 @@ def webhook_verification():
             return challenge, 200
         else:
             return 'Verification token mismatch', 403
-    return 'Hello world ',mode, 200
+    return 'Hello world -> ', verify_token, '//// ', mode, '////', token, '////', challenge, 200
 
 
 @app.route('/webhook', methods=['POST'])
