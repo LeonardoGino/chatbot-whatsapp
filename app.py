@@ -31,7 +31,7 @@ def webhook_verification():
 
     if mode and token:
         if mode == 'subscribe' and token == verify_token:
-            return challenge, 200
+            return 'Hello world VERIFY TOKEN', challenge, 200
         else:
             return 'Verification token mismatch', 403
     return 'Hello world', 200
