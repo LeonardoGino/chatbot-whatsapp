@@ -52,8 +52,8 @@ def send_whatsapp_message(to, message):
         }
     }
     response = requests.post(url, headers=headers, json=payload)
-    print(f"Sending message to {to}: {message}")  # Agrega este print para debug
-    print(f"Response: {response.status_code}, {response.text}")  # Agrega este print para debug
+    print(f"Sending message to {to}: {message}")
+    print(f"Response: {response.status_code}, {response.text}")
     return response.json()
 
 if __name__ == '__main__':
