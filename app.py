@@ -1,10 +1,9 @@
 from flask import Flask, request, jsonify
-import requests
 import os
+import requests
 
 app = Flask(__name__)
 
-# Cargar variables de entorno
 WHATSAPP_TOKEN = os.getenv("WHATSAPP_TOKEN")
 WHATSAPP_PHONE_NUMBER_ID = os.getenv("WHATSAPP_PHONE_NUMBER_ID")
 VERIFY_TOKEN = os.getenv("VERIFY_TOKEN")
@@ -20,16 +19,19 @@ def verify():
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
-    data = request.get_json()
-    if data.get("object") == "whatsapp_business_account":
-        for entry in data.get("entry", []):
-            for change in entry.get("changes", []):
-                if change.get("field") == "messages":
-                    message = change.get("value").get("messages")[0]
-                    phone_number = message.get("from")
-                    text = message.get("text", {}).get("body", "")
-                    process_incoming_message(phone_number, text)
-    return jsonify({"status": "received"}), 200
+    if request.is_json:
+        data = request.get_json()
+        if data.get("object") == "whatsapp_business_account":
+            for entry in data.get("entry", []):
+                for change in entry.get("changes", []):
+                    if change.get("field") == "messages":
+                        message = change.get("value").get("messages")[0]
+                        phone_number = message.get("from")
+                        text = message.get("text", {}).get("body", "")
+                        process_incoming_message(phone_number, text)
+        return jsonify({"status": "received"}), 200
+    else:
+        return "Unsupported Media Type", 415
 
 def process_incoming_message(phone_number, text):
     response_message = f"Received your message: {text}"
@@ -50,6 +52,8 @@ def send_whatsapp_message(to, message):
         }
     }
     response = requests.post(url, headers=headers, json=payload)
+    print(f"Sending message to {to}: {message}")  # Agrega este print para debug
+    print(f"Response: {response.status_code}, {response.text}")  # Agrega este print para debug
     return response.json()
 
 if __name__ == '__main__':
