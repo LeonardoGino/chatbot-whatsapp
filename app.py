@@ -1,76 +1,56 @@
+from flask import Flask, request, jsonify
 import requests
-from flask import Flask, render_template, request, Blueprint, json, jsonify
-
-from config import Config
+import os
 
 app = Flask(__name__)
-app.config.from_object(Config)
-main = Blueprint('main', __name__)
 
-
-@app.route('/')
-def index():
-    return (render_template('index.html'))
-
-
-@app.route('/debuglog', methods=['GET'])
-def log_properties():
-    whatsapp_phone_number = Config.WHATSAPP_PHONE_NUMBER_ID
-    whatsapp_token = Config.WHATSAPP_TOKEN
-    whatsapp_url = Config.WHATSAPP_URL
-    verify_token = Config.VERIFY_TOKEN
-    return f"Whatsapp phone number {whatsapp_phone_number} \n Whatsapp token {whatsapp_token} \n Whatsapp URL {whatsapp_url} \n verify token {verify_token}", 200
-
+# Cargar variables de entorno
+WHATSAPP_TOKEN = os.getenv("WHATSAPP_TOKEN")
+WHATSAPP_PHONE_NUMBER_ID = os.getenv("WHATSAPP_PHONE_NUMBER_ID")
+VERIFY_TOKEN = os.getenv("VERIFY_TOKEN")
+WHATSAPP_API_URL = f"https://graph.facebook.com/v13.0/{WHATSAPP_PHONE_NUMBER_ID}/messages"
 
 @app.route('/webhook', methods=['GET'])
-def webhook_verification():
-    verify_token = Config.VERIFY_TOKEN
-    mode = request.args.get('hub.mode')
-    token = request.args.get('hub.verify_token')
-    challenge = request.args.get('hub.challenge')
-
-    if mode and token:
-        if mode == 'subscribe' and token == verify_token:
-            return challenge, 200
-        else:
-            return 'Verification token mismatch', 403
-    return 'Hello world -> ', verify_token, 200
-
+def verify():
+    if request.args.get("hub.mode") == "subscribe" and request.args.get("hub.challenge"):
+        if request.args.get("hub.verify_token") == VERIFY_TOKEN:
+            return request.args["hub.challenge"], 200
+        return "Verification token mismatch", 403
+    return "Hello world", 200
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
     data = request.get_json()
+    if data.get("object") == "whatsapp_business_account":
+        for entry in data.get("entry", []):
+            for change in entry.get("changes", []):
+                if change.get("field") == "messages":
+                    message = change.get("value").get("messages")[0]
+                    phone_number = message.get("from")
+                    text = message.get("text", {}).get("body", "")
+                    process_incoming_message(phone_number, text)
+    return jsonify({"status": "received"}), 200
 
-    if data.get('object') == 'whatsapp_business_account':
-        for entry in data.get('entry', []):
-            for change in entry.get('changes', []):
-                value = change.get('value')
-                messages = value.get('messages')
-                if messages:
-                    for message in messages:
-                        phone_number = message['from']
-                        respuesta = "Hola! Soy un botardo"
-                        send_whatsapp_message(phone_number, respuesta)
-    return jsonify({'status': 'received'})
+def process_incoming_message(phone_number, text):
+    response_message = f"Received your message: {text}"
+    send_whatsapp_message(phone_number, response_message)
 
-
-def send_whatsapp_message(to, body):
-    url = f"https://graph.facebook.com/v14.0/{Config.WHATSAPP_PHONE_NUMBER_ID}/messages"
+def send_whatsapp_message(to, message):
+    url = WHATSAPP_API_URL
     headers = {
-        "Authorization": f"Bearer {Config.META_ACCESS_TOKEN}",
+        "Authorization": f"Bearer {WHATSAPP_TOKEN}",
         "Content-Type": "application/json"
     }
-    data = {
+    payload = {
         "messaging_product": "whatsapp",
         "to": to,
         "type": "text",
         "text": {
-            "body": body
+            "body": message
         }
     }
-    response = requests.post(url, headers=headers, data=json.dumps(data))
+    response = requests.post(url, headers=headers, json=payload)
     return response.json()
-
 
 if __name__ == '__main__':
     app.run(debug=True)
