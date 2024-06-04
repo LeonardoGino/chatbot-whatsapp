@@ -29,11 +29,18 @@ def webhook():
                     if change.get("field") == "messages":
                         message = change.get("value").get("messages")[0]
                         phone_number = message.get("from")
+                        phone_number = format_phone_number(phone_number)  # Formatear número de teléfono
                         text = message.get("text", {}).get("body", "")
                         process_incoming_message(phone_number, text)
         return jsonify({"status": "received"}), 200
     else:
         return "Unsupported Media Type", 415
+
+def format_phone_number(phone_number):
+    if phone_number.startswith("549"):
+        # Cambia "549" a "54" si el número empieza con "549"
+        return "54" + phone_number[3:]
+    return phone_number
 
 def process_incoming_message(phone_number, text):
     response_message = f"Received your message: {text}"
