@@ -4,6 +4,7 @@ import requests
 
 app = Flask(__name__)
 
+# Variables de entorno
 WHATSAPP_TOKEN = os.getenv("WHATSAPP_TOKEN")
 WHATSAPP_PHONE_NUMBER_ID = os.getenv("WHATSAPP_PHONE_NUMBER_ID")
 VERIFY_TOKEN = os.getenv("VERIFY_TOKEN")
@@ -21,6 +22,7 @@ def verify():
 def webhook():
     if request.is_json:
         data = request.get_json()
+        print(f"Webhook received data: {data}")  # Debugging
         if data.get("object") == "whatsapp_business_account":
             for entry in data.get("entry", []):
                 for change in entry.get("changes", []):
@@ -35,6 +37,7 @@ def webhook():
 
 def process_incoming_message(phone_number, text):
     response_message = f"Received your message: {text}"
+    print(f"Processing incoming message from {phone_number}: {text}")  # Debugging
     send_whatsapp_message(phone_number, response_message)
 
 def send_whatsapp_message(to, message):
@@ -51,10 +54,15 @@ def send_whatsapp_message(to, message):
             "body": message
         }
     }
-    response = requests.post(url, headers=headers, json=payload)
-    print(f"Sending message to {to}: {message}")
-    print(f"Response: {response.status_code}, {response.text}")
-    return response.json()
+    try:
+        response = requests.post(url, headers=headers, json=payload)
+        print(f"Sending message to {to}: {message}")
+        print(f"Response: {response.status_code}, {response.text}")
+        response.raise_for_status()  # Esto lanzará un error para códigos de estado 4xx/5xx
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        print(f"Error sending message: {e}")
+        return None
 
 if __name__ == '__main__':
     app.run(debug=True)
