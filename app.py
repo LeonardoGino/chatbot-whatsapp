@@ -28,11 +28,17 @@ def webhook():
             for entry in data.get("entry", []):
                 for change in entry.get("changes", []):
                     if change.get("field") == "messages":
-                        message = change.get("value").get("messages")[0]
-                        phone_number = message.get("from")
-                        phone_number = format_phone_number(phone_number)  # Formatear número de teléfono
-                        text = message.get("text", {}).get("body", "")
-                        process_incoming_message(phone_number, text)
+                        try:
+                            message = change.get("value", {}).get("messages", [None])[0]
+                            if message is None:
+                                print("No messages found in the payload.")
+                                continue
+                            phone_number = message.get("from")
+                            phone_number = format_phone_number(phone_number)  # Formatear número de teléfono
+                            text = message.get("text", {}).get("body", "")
+                            process_incoming_message(phone_number, text)
+                        except Exception as e:
+                            print(f"Error processing message: {e}")
         return jsonify({"status": "received"}), 200
     else:
         return "Unsupported Media Type", 415
@@ -45,14 +51,17 @@ def format_phone_number(phone_number):
 
 def generate_response_message(text):
     try:
+        response_message ="Hola mi rey! "
+        # Lógica simple para detectar preguntas sobre precios
         if re.search(r'\bprecio\b', text, re.IGNORECASE):
-            response_message = "¿Estás preguntando sobre el precio? 20 pesos"
+            # Aquí podrías hacer una llamada a una API para obtener el precio real
+            response_message = response_message + "¿Estás preguntando sobre el precio? El precio son 20 pesos"
         else:
-            response_message = f"Hola titan, como puedo ayudarte?"
+            response_message = response_message + f"No se entiende Walter, por que precio estas preguntando?: {text}"
         return response_message
     except Exception as e:
         print(f"Error in generate_response_message: {e}")
-        return "No entendi mostro"
+        return "Lo siento, hubo un error procesando tu mensaje."
 
 def process_incoming_message(phone_number, text):
     try:
