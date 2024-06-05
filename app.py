@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 import os
 import requests
+import re
 
 app = Flask(__name__)
 
@@ -43,19 +44,23 @@ def format_phone_number(phone_number):
     return phone_number
 
 def generate_response_message(text):
-    if re.search(r'\bhola\b', text, re.IGNORECASE):
-        response_message = "Hola mi rey, como estas? En que puedo ayudarte?."
-    if re.search(r'\bprecio\b', text, re.IGNORECASE):
-        response_message = f"Te sale 20 pesos"
-    else:
-        response_message = f"No entendi mostro"
-
-    return response_message
+    try:
+        if re.search(r'\bprecio\b', text, re.IGNORECASE):
+            response_message = "¿Estás preguntando sobre el precio? 20 pesos"
+        else:
+            response_message = f"Hola titan, como puedo ayudarte?"
+        return response_message
+    except Exception as e:
+        print(f"Error in generate_response_message: {e}")
+        return "No entendi mostro"
 
 def process_incoming_message(phone_number, text):
-    response_message = generate_response_message(text)
-    print(f"Processing incoming message from {phone_number}: {text}")  # Debugging
-    send_whatsapp_message(phone_number, response_message)
+    try:
+        response_message = generate_response_message(text)
+        print(f"Processing incoming message from {phone_number}: {text}")  # Debugging
+        send_whatsapp_message(phone_number, response_message)
+    except Exception as e:
+        print(f"Error in process_incoming_message: {e}")
 
 def send_whatsapp_message(to, message):
     url = WHATSAPP_API_URL
