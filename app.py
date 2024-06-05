@@ -42,8 +42,18 @@ def format_phone_number(phone_number):
         return "54" + phone_number[3:]
     return phone_number
 
+def generate_response_message(text):
+    if re.search(r'\bhola\b', text, re.IGNORECASE):
+        response_message = "Hola mi rey, como estas? En que puedo ayudarte?."
+    if re.search(r'\bprecio\b', text, re.IGNORECASE):
+        response_message = f"Te sale 20 pesos"
+    else:
+        response_message = f"No entendi mostro"
+
+    return response_message
+
 def process_incoming_message(phone_number, text):
-    response_message = f"Received your message: {text}"
+    response_message = generate_response_message(text)
     print(f"Processing incoming message from {phone_number}: {text}")  # Debugging
     send_whatsapp_message(phone_number, response_message)
 
