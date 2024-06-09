@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 import os
 import requests
 import re
+from read_sheet import get_crypto_price  # Importar la función para obtener el precio
 
 app = Flask(__name__)
 
@@ -51,13 +52,16 @@ def format_phone_number(phone_number):
 
 def generate_response_message(text):
     try:
-        response_message ="Hola mi rey! "
-        # Lógica simple para detectar preguntas sobre precios
-        if re.search(r'\bprecio\b', text, re.IGNORECASE):
-            # Aquí podrías hacer una llamada a una API para obtener el precio real
-            response_message = response_message + "¿Estás preguntando sobre el precio? El precio son 20 pesos"
+        response_message = "Hola mi rey! "
+        if re.search(r'\bprecio de\b', text, re.IGNORECASE):
+            crypto_name = text.split('precio de')[-1].strip()
+            price = get_crypto_price(crypto_name)
+            if price is not None:
+                response_message += f"El precio de {crypto_name} es ${price} USD."
+            else:
+                response_message += f"No se encontró información para {crypto_name}."
         else:
-            response_message = response_message + f"No se entiende Walter, por que precio estas preguntando?: {text}"
+            response_message += f"No se entiende Walter, por qué precio estás preguntando?: {text}"
         return response_message
     except Exception as e:
         print(f"Error in generate_response_message: {e}")
