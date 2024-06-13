@@ -16,3 +16,14 @@ def get_crypto_price(crypto_name):
         return row.iloc[0]['Price (USD)']
     else:
         return None
+
+def get_crypto_commission(crypto_name):
+    row = df[df['Cryptocurrency'].str.lower() == crypto_name.lower()]
+    if not row.empty:
+        return {
+            'fixed_commission': row.iloc[0]['Fixed Commission (USDT)'],
+            'variable_commission': row.iloc[0]['Variable Commission (%)'],
+            'min_amount': row.iloc[0]['Min Amount (USD)']
+        }
+    else:
+        return None

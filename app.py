@@ -1,16 +1,21 @@
 from flask import Flask, request, jsonify
 import os
 import requests
-import re
-from read_sheet import get_crypto_price  # Importar la función para obtener el precio
+from config import Config  # Importar la configuración
+from bot import WhatsAppBot  # Importar la clase WhatsAppBot
+import spacy
 
 app = Flask(__name__)
 
 # Variables de entorno
-WHATSAPP_TOKEN = os.getenv("WHATSAPP_TOKEN")
-WHATSAPP_PHONE_NUMBER_ID = os.getenv("WHATSAPP_PHONE_NUMBER_ID")
-VERIFY_TOKEN = os.getenv("VERIFY_TOKEN")
+WHATSAPP_TOKEN = Config.WHATSAPP_TOKEN
+WHATSAPP_PHONE_NUMBER_ID = Config.WHATSAPP_PHONE_NUMBER_ID
+VERIFY_TOKEN = Config.VERIFY_TOKEN
 WHATSAPP_API_URL = f"https://graph.facebook.com/v13.0/{WHATSAPP_PHONE_NUMBER_ID}/messages"
+
+# Cargar el modelo de spaCy
+nlp = spacy.load('es_core_news_sm')
+bot = WhatsAppBot(nlp)
 
 @app.route('/webhook', methods=['GET'])
 def verify():
@@ -24,7 +29,6 @@ def verify():
 def webhook():
     if request.is_json:
         data = request.get_json()
-        print(f"Webhook received data: {data}")  # Debugging
         if data.get("object") == "whatsapp_business_account":
             for entry in data.get("entry", []):
                 for change in entry.get("changes", []):
@@ -32,50 +36,24 @@ def webhook():
                         try:
                             message = change.get("value", {}).get("messages", [None])[0]
                             if message is None:
-                                print("No messages found in the payload.")
                                 continue
                             phone_number = message.get("from")
-                            phone_number = format_phone_number(phone_number)  # Formatear número de teléfono
                             text = message.get("text", {}).get("body", "")
                             process_incoming_message(phone_number, text)
                         except Exception as e:
                             print(f"Error processing message: {e}")
         return jsonify({"status": "received"}), 200
     else:
-        return "Unsupported Media Type", 415
-
-def format_phone_number(phone_number):
-    if phone_number.startswith("549"):
-        # Cambia "549" a "54" si el número empieza con "549"
-        return "54" + phone_number[3:]
-    return phone_number
-
-def generate_response_message(text):
-    try:
-        response_message = "Hola mi rey! "
-        if re.search(r'\bprecio de\b', text, re.IGNORECASE):
-            crypto_name = text.split('precio de')[-1].strip()
-            price = get_crypto_price(crypto_name)
-            if price is not None:
-                response_message += f"El precio de {crypto_name} es ${price} USD."
-            else:
-                response_message += f"No se encontró información para {crypto_name}."
-        else:
-            response_message += f"No se entiende Walter, por qué precio estás preguntando?: {text}"
-        return response_message
-    except Exception as e:
-        print(f"Error in generate_response_message: {e}")
-        return "Lo siento, hubo un error procesando tu mensaje."
+        return jsonify({"status": "not a json request"}), 400
 
 def process_incoming_message(phone_number, text):
     try:
-        response_message = generate_response_message(text)
-        print(f"Processing incoming message from {phone_number}: {text}")  # Debugging
-        send_whatsapp_message(phone_number, response_message)
+        response_template = bot.generate_response_message(text)
+        send_whatsapp_message(phone_number, response_template)
     except Exception as e:
         print(f"Error in process_incoming_message: {e}")
 
-def send_whatsapp_message(to, message):
+def send_whatsapp_message(to, template):
     url = WHATSAPP_API_URL
     headers = {
         "Authorization": f"Bearer {WHATSAPP_TOKEN}",
@@ -84,15 +62,15 @@ def send_whatsapp_message(to, message):
     payload = {
         "messaging_product": "whatsapp",
         "to": to,
-        "type": "text",
-        "text": {
-            "body": message
+        "type": "template",
+        "template": {
+            "name": template["template_name"],
+            "language": {"code": "es"},
+            "components": template["components"]
         }
     }
     try:
         response = requests.post(url, headers=headers, json=payload)
-        print(f"Sending message to {to}: {message}")
-        print(f"Response: {response.status_code}, {response.text}")
         response.raise_for_status()  # Esto lanzará un error para códigos de estado 4xx/5xx
         return response.json()
     except requests.exceptions.RequestException as e:

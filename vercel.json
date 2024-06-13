@@ -1,9 +1,22 @@
 {
     "version": 2,
     "builds": [
-        {"src": "app.py", "use": "@vercel/python"}
+        {
+            "src": "app.py",
+            "use": "@vercel/python"
+        }
     ],
     "routes": [
-        {"src": "/(.*)", "dest": "app.py"}
-    ]
+        {
+            "src": "/(.*)",
+            "dest": "app.py"
+        }
+    ],
+    "build": {
+        "env": {
+            "PIP_DISABLE_PIP_VERSION_CHECK": "1",
+            "PIP_NO_CACHE_DIR": "1"
+        },
+        "hook": "python download_spacy_model.py"
+    }
 }
