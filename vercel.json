@@ -16,7 +16,6 @@
         "env": {
             "PIP_DISABLE_PIP_VERSION_CHECK": "1",
             "PIP_NO_CACHE_DIR": "1"
-        },
-        "hook": "python download_spacy_model.py"
+        }
     }
 }
