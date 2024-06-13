@@ -1,9 +1,9 @@
 from flask import Flask, request, jsonify
-import os
 import requests
 from config import Config  # Importar la configuración
 from bot import WhatsAppBot  # Importar la clase WhatsAppBot
 import spacy
+import subprocess
 
 app = Flask(__name__)
 
@@ -12,6 +12,15 @@ WHATSAPP_TOKEN = Config.WHATSAPP_TOKEN
 WHATSAPP_PHONE_NUMBER_ID = Config.WHATSAPP_PHONE_NUMBER_ID
 VERIFY_TOKEN = Config.VERIFY_TOKEN
 WHATSAPP_API_URL = f"https://graph.facebook.com/v13.0/{WHATSAPP_PHONE_NUMBER_ID}/messages"
+
+# Verificar y descargar el modelo de spaCy si no está disponible
+def ensure_spacy_model():
+    try:
+        nlp = spacy.load('es_core_news_sm')
+    except OSError:
+        subprocess.run(["python", "-m", "spacy", "download", "es_core_news_sm"])
+        nlp = spacy.load('es_core_news_sm')
+    return nlp
 
 # Cargar el modelo de spaCy
 nlp = spacy.load('es_core_news_sm')
