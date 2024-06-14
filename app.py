@@ -70,7 +70,7 @@ def send_whatsapp_message(to, template):
         "type": "template",
         "template": {
             "name": template["template_name"],
-            "language": {"code": "es"},
+            "language": {"code": "es_AR"},
             "components": template["components"]
         }
     }
