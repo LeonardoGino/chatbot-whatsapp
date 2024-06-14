@@ -1,16 +1,18 @@
 from flask import Flask, request, jsonify
-import os
 import requests
-from config import Config  # Importar la configuración
-from bot import WhatsAppBot  # Importar la clase WhatsAppBot
+from config import Config
+from bot import WhatsAppBot
 
 app = Flask(__name__)
 
-# Variables de entorno
 WHATSAPP_TOKEN = Config.WHATSAPP_TOKEN
 WHATSAPP_PHONE_NUMBER_ID = Config.WHATSAPP_PHONE_NUMBER_ID
 VERIFY_TOKEN = Config.VERIFY_TOKEN
 WHATSAPP_API_URL = f"https://graph.facebook.com/v13.0/{WHATSAPP_PHONE_NUMBER_ID}/messages"
+
+print(f"WHATSAPP_TOKEN: {WHATSAPP_TOKEN}")
+print(f"WHATSAPP_PHONE_NUMBER_ID: {WHATSAPP_PHONE_NUMBER_ID}")
+print(f"VERIFY_TOKEN: {VERIFY_TOKEN}")
 
 # Instanciar el bot
 bot = WhatsAppBot()
@@ -50,6 +52,7 @@ def webhook():
 def process_incoming_message(phone_number, text):
     try:
         response_template = bot.generate_response_message(text)
+        print(f"Sending template: {response_template}")
         send_whatsapp_message(phone_number, response_template)
     except Exception as e:
         print(f"Error in process_incoming_message: {e}")
@@ -72,11 +75,13 @@ def send_whatsapp_message(to, template):
         }
     }
     try:
+        print(f"Sending request to URL: {url}")
+        print(f"Headers: {headers}")
         response = requests.post(url, headers=headers, json=payload)
-        response.raise_for_status()  # Esto lanzará un error para códigos de estado 4xx/5xx
+        response.raise_for_status()
         return response.json()
-    except requests.exceptions.RequestException as e:
-        print(f"Error sending message: {e}")
+    except requests.exceptions.HTTPError as e:
+        print(f"Error sending message: {e.response.status_code} - {e.response.text}")
         return None
 
 
