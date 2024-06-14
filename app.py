@@ -1,5 +1,7 @@
 from flask import Flask, request, jsonify
 import requests
+from spacy.cli import download
+
 from config import Config  # Importar la configuración
 from bot import WhatsAppBot  # Importar la clase WhatsAppBot
 import spacy
@@ -18,7 +20,8 @@ def ensure_spacy_model():
     try:
         nlp = spacy.load('es_core_news_sm')
     except OSError:
-        subprocess.run(["python", "-m", "spacy", "download", "es_core_news_sm"])
+        print("Downloading spaCy model...")
+        download("es_core_news_sm")
         nlp = spacy.load('es_core_news_sm')
     return nlp
 
