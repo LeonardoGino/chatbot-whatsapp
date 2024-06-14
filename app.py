@@ -10,11 +10,6 @@ WHATSAPP_PHONE_NUMBER_ID = Config.WHATSAPP_PHONE_NUMBER_ID
 VERIFY_TOKEN = Config.VERIFY_TOKEN
 WHATSAPP_API_URL = f"https://graph.facebook.com/v13.0/{WHATSAPP_PHONE_NUMBER_ID}/messages"
 
-print(f"WHATSAPP_TOKEN: {WHATSAPP_TOKEN}")
-print(f"WHATSAPP_PHONE_NUMBER_ID: {WHATSAPP_PHONE_NUMBER_ID}")
-print(f"VERIFY_TOKEN: {VERIFY_TOKEN}")
-
-# Instanciar el bot
 bot = WhatsAppBot()
 
 
@@ -39,7 +34,7 @@ def webhook():
                             message = change.get("value", {}).get("messages", [None])[0]
                             if message is None:
                                 continue
-                            phone_number = message.get("from")
+                            phone_number = process_telephone_number(message.get("from"))
                             text = message.get("text", {}).get("body", "")
                             process_incoming_message(phone_number, text)
                         except Exception as e:
@@ -49,10 +44,15 @@ def webhook():
         return jsonify({"status": "not a json request"}), 400
 
 
+def process_telephone_number(telephone_number):
+    if telephone_number.startswith("54") and len(telephone_number) > 2 and telephone_number[2] == "9":
+        return telephone_number[:2] + telephone_number[3:]
+    return telephone_number
+
+
 def process_incoming_message(phone_number, text):
     try:
         response_template = bot.generate_response_message(text)
-        print(f"Sending template: {response_template}")
         send_whatsapp_message(phone_number, response_template)
     except Exception as e:
         print(f"Error in process_incoming_message: {e}")
@@ -75,8 +75,6 @@ def send_whatsapp_message(to, template):
         }
     }
     try:
-        print(f"Sending request to URL: {url}")
-        print(f"Headers: {headers}")
         response = requests.post(url, headers=headers, json=payload)
         response.raise_for_status()
         return response.json()
