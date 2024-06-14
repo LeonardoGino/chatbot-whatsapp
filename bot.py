@@ -12,13 +12,13 @@ class WhatsAppBot:
             if self.is_price_query(text):
                 return self.handle_price_query(text)
             else:
-                return self.create_template_response("unknown_query", [text])
+                return self.create_template_response("unknown_query", [])
         except Exception as e:
             print(f"Error in generate_response_message: {e}")
             return self.create_template_response("error_message", [str(e)])
 
-    def is_price_query(self, text):
-        # Usar una expresión regular para detectar preguntas sobre precios
+    @staticmethod
+    def is_price_query(text):
         return re.search(r'\bprecio\b.*\bde\b', text.lower()) is not None
 
     def handle_price_query(self, text):
@@ -39,9 +39,10 @@ class WhatsAppBot:
             else:
                 return self.create_template_response("price_query_failure", [crypto_name])
         else:
-            return self.create_template_response("price_query_failure", [])
+            return self.create_template_response("price_query_failure", [crypto_name])
 
-    def create_template_response(self, template_name, parameters):
+    @staticmethod
+    def create_template_response(template_name, parameters):
         return {
             "template_name": template_name,
             "components": [{"type": "body", "parameters": [{"type": "text", "text": param} for param in parameters]}]
