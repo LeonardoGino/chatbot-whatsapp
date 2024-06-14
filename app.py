@@ -1,11 +1,10 @@
-from flask import Flask, request, jsonify
 import requests
+import spacy
+from flask import Flask, request, jsonify
 from spacy.cli import download
 
-from config import Config  # Importar la configuración
 from bot import WhatsAppBot  # Importar la clase WhatsAppBot
-import spacy
-import subprocess
+from config import Config  # Importar la configuración
 
 app = Flask(__name__)
 
@@ -14,6 +13,7 @@ WHATSAPP_TOKEN = Config.WHATSAPP_TOKEN
 WHATSAPP_PHONE_NUMBER_ID = Config.WHATSAPP_PHONE_NUMBER_ID
 VERIFY_TOKEN = Config.VERIFY_TOKEN
 WHATSAPP_API_URL = f"https://graph.facebook.com/v13.0/{WHATSAPP_PHONE_NUMBER_ID}/messages"
+
 
 # Verificar y descargar el modelo de spaCy si no está disponible
 def ensure_spacy_model():
@@ -25,9 +25,11 @@ def ensure_spacy_model():
         nlp = spacy.load('es_core_news_sm')
     return nlp
 
+
 # Cargar el modelo de spaCy
-nlp = spacy.load('es_core_news_sm')
+nlp = ensure_spacy_model()
 bot = WhatsAppBot(nlp)
+
 
 @app.route('/webhook', methods=['GET'])
 def verify():
@@ -36,6 +38,7 @@ def verify():
             return request.args["hub.challenge"], 200
         return "Verification token mismatch", 403
     return "Hello world", 200
+
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
@@ -58,12 +61,14 @@ def webhook():
     else:
         return jsonify({"status": "not a json request"}), 400
 
+
 def process_incoming_message(phone_number, text):
     try:
         response_template = bot.generate_response_message(text)
         send_whatsapp_message(phone_number, response_template)
     except Exception as e:
         print(f"Error in process_incoming_message: {e}")
+
 
 def send_whatsapp_message(to, template):
     url = WHATSAPP_API_URL
@@ -88,6 +93,7 @@ def send_whatsapp_message(to, template):
     except requests.exceptions.RequestException as e:
         print(f"Error sending message: {e}")
         return None
+
 
 if __name__ == '__main__':
     app.run(debug=True)
