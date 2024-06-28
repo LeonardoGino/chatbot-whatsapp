@@ -16,11 +16,11 @@ def get_currency_info(currency_name):
     row = df[df['Moneda'].str.lower() == currency_name.lower()]
     if not row.empty:
         info = {
-            'purchase_price': row.iloc[0]['Precio Compra(ARS)'],
-            'sale_price': row.iloc[0]['Precio Venta(ARS)'],
-            'variable_commission': row.iloc[0]['Comision Variable(%)'],
-            'min_amount': row.iloc[0]['Monto minimo (USD)'],
-            'fixed_commission': row.iloc[0]['Comision Fija (USD)']
+            'purchase_price': float(row.iloc[0]['Precio Compra(ARS)']),
+            'sale_price': float(row.iloc[0]['Precio Venta(ARS)']),
+            'variable_commission': float(row.iloc[0]['Comision Variable(%)']),
+            'min_amount': float(row.iloc[0]['Monto minimo (USD)']),
+            'fixed_commission': float(row.iloc[0]['Comision Fija (USD)'])
         }
         return info
     else:
