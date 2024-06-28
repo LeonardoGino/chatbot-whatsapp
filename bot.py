@@ -1,6 +1,7 @@
 import re
 import read_sheet
 
+
 class WhatsAppBot:
     def __init__(self):
         self.price_patterns = [
@@ -34,17 +35,21 @@ class WhatsAppBot:
     def handle_price_query(self, currency_name):
         info = read_sheet.get_currency_info(currency_name)
         if info is not None:
-            return self.create_template_response(
-                "price_query_success",
-                [
+            if info['fixed_commission'] is not None and info['fixed_commission'] > 0:
+                return self.create_template_response(
+                    "cryptocurrency_price_query_success",
+                    [
+                        currency_name.capitalize(),
+                        str(info['variable_commission']),
+                        str(info['min_amount']),
+                        str(info['fixed_commission'])
+                    ])
+            else:
+                return self.create_template_response("currency_price_query_success", [
                     currency_name.capitalize(),
                     str(info['purchase_price']),
-                    str(info['sale_price']),
-                    str(info['variable_commission']),
-                    str(info['min_amount']),
-                    str(info['fixed_commission'])
-                ]
-            )
+                    str(info['sale_price'])
+                ])
         else:
             return self.create_template_response("price_query_failure", [currency_name])
 
