@@ -16,15 +16,22 @@ def get_currency_info(currency_name):
     row = df[df['Moneda'].str.lower() == currency_name.lower()]
     if not row.empty:
         info = {
-            'purchase_price': float(row.iloc[0]['Precio Compra(ARS)']),
-            'sale_price': float(row.iloc[0]['Precio Venta(ARS)']),
-            'variable_commission': float(row.iloc[0]['Comision Variable(%)']),
-            'min_amount': float(row.iloc[0]['Monto minimo (USD)']),
-            'fixed_commission': float(row.iloc[0]['Comision Fija (USD)'])
+            'purchase_price': parse_float(row.iloc[0]['Precio Compra(ARS)']),
+            'sale_price': parse_float(row.iloc[0]['Precio Venta(ARS)']),
+            'variable_commission': parse_float(row.iloc[0]['Comision Variable(%)']),
+            'min_amount': parse_float(row.iloc[0]['Monto minimo (USD)']),
+            'fixed_commission': parse_float(row.iloc[0]['Comision Fija (USD)'])
         }
         return info
     else:
         return None
+
+
+def parse_float(value):
+    try:
+        return float(value)
+    except ValueError:
+        return 0.0
 
 
 def format_currency_response(currency_name):
