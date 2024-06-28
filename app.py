@@ -46,7 +46,7 @@ def webhook():
                                     "template_name": "greeting_template",
                                     "components": [{"type": "body", "parameters": [{"type": "text", "text": "¡Hola! ¿Cómo estas?"}]}]
                                 })
-                            greeted_users[phone_number] = datetime.now().date()
+                                greeted_users[phone_number] = datetime.now().date()
 
                             response = bot.generate_response_message(text)
                             send_whatsapp_message(phone_number, response)
