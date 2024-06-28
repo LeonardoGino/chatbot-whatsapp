@@ -42,8 +42,11 @@ def webhook():
                             text = message.get("text", {}).get("body", "")
 
                             if should_greet_user(phone_number):
-                                send_whatsapp_message(phone_number, "¡Hola! Como estas?")
-                                greeted_users[phone_number] = datetime.now().date()
+                                send_whatsapp_message(phone_number, {
+                                    "template_name": "greeting_template",
+                                    "components": [{"type": "body", "parameters": [{"type": "text", "text": "¡Hola! ¿Cómo estas?"}]}]
+                                })
+                            greeted_users[phone_number] = datetime.now().date()
 
                             response = bot.generate_response_message(text)
                             send_whatsapp_message(phone_number, response)
