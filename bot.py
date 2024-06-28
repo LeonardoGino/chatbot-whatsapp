@@ -19,27 +19,43 @@ class WhatsAppBot:
 
     @staticmethod
     def is_price_query(text):
-        return re.search(r'\bprecio\b.*\bde\b', text.lower()) is not None
+        # Patrones comunes para detectar consultas sobre precios
+        patterns = [
+            r'\bprecio\b.*\bde\b',            # "precio de ..."
+            r'\bcuánto\b.*\bcuesta\b',        # "cuánto cuesta ..."
+            r'\bvalor\b.*\bde\b',             # "valor de ..."
+            r'\bcosto\b.*\bde\b',             # "costo de ..."
+            r'\bcuál es el precio\b.*\bde\b', # "cuál es el precio de ..."
+            r'\bcuál es el valor\b.*\bde\b'   # "cuál es el valor de ..."
+        ]
+        # Compilar patrones y verificar si alguno coincide con el texto
+        for pattern in patterns:
+            if re.search(pattern, text.lower()):
+                return True
+        return False
 
     def handle_price_query(self, text):
-        # Extraer el nombre de la criptomoneda usando una expresión regular
         match = re.search(r'\bprecio\b.*\bde\b\s+(\w+)', text.lower())
-        crypto_name = match.group(1) if match else None
+        currency_name = match.group(1) if match else None
 
-        if crypto_name:
-            price = read_sheet.get_crypto_price(crypto_name)
-            commission_info = read_sheet.get_crypto_commission(crypto_name)
-            if price is not None and commission_info is not None:
-                fixed_commission = commission_info['fixed_commission']
-                variable_commission = commission_info['variable_commission']
-                min_amount = commission_info['min_amount']
-                return self.create_template_response("price_query_success",
-                                                     [crypto_name, str(price), str(fixed_commission),
-                                                      str(variable_commission), str(min_amount)])
+        if currency_name:
+            info = read_sheet.get_currency_info(currency_name)
+            if info is not None:
+                return self.create_template_response(
+                    "price_query_success",
+                    [
+                        currency_name.capitalize(),
+                        str(info['purchase_price']),
+                        str(info['sale_price']),
+                        str(info['variable_commission']),
+                        str(info['min_amount']),
+                        str(info['fixed_commission'])
+                    ]
+                )
             else:
-                return self.create_template_response("price_query_failure", [crypto_name])
+                return self.create_template_response("price_query_failure", [currency_name])
         else:
-            return self.create_template_response("price_query_failure", [crypto_name])
+            return self.create_template_response("price_query_failure", [currency_name])
 
     @staticmethod
     def create_template_response(template_name, parameters):

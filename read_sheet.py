@@ -12,21 +12,27 @@ data = sheet.get_all_records()
 df = pd.DataFrame(data)
 
 
-def get_crypto_price(crypto_name):
-    row = df[df['Cryptocurrency'].str.lower() == crypto_name.lower()]
+def get_currency_info(currency_name):
+    row = df[df['Moneda'].str.lower() == currency_name.lower()]
     if not row.empty:
-        return row.iloc[0]['Price (USD)']
-    else:
-        return None
-
-
-def get_crypto_commission(crypto_name):
-    row = df[df['Cryptocurrency'].str.lower() == crypto_name.lower()]
-    if not row.empty:
-        return {
-            'fixed_commission': row.iloc[0]['Fixed Commission (USDT)'],
-            'variable_commission': row.iloc[0]['Variable Commission (%)'],
-            'min_amount': row.iloc[0]['Min Amount (USD)']
+        info = {
+            'purchase_price': row.iloc[0]['Precio Compra(ARS)'],
+            'sale_price': row.iloc[0]['Precio Venta(ARS)'],
+            'variable_commission': row.iloc[0]['Comision Variable(%)'],
+            'min_amount': row.iloc[0]['Monto minimo (USD)'],
+            'fixed_commission': row.iloc[0]['Comision Fija (USD)']
         }
+        return info
     else:
         return None
+
+
+def format_currency_response(currency_name):
+    info = get_currency_info(currency_name)
+    if info:
+        response = (f"El precio del {currency_name} es {info['purchase_price']} para la compra "
+                    f"{info['sale_price']} para la venta. Tiene un {info['variable_commission']}% de comisión "
+                    f"superando los {info['min_amount']}USD, menos tendría una comisión de {info['fixed_commission']}USD.")
+        return response
+    else:
+        return f"No se encontró información para la moneda {currency_name}."
